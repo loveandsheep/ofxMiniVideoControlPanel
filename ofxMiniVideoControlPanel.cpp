@@ -9,17 +9,47 @@
 #include "ofxMiniVideoControlPanel.h"
 
 ofxMiniVideoControlPanel::ofxMiniVideoControlPanel(){
-	ofRegisterMouseEvents(this);
-	ofRegisterKeyEvents(this);
+    ofAddListener(ofEvents().mouseMoved, this, &ofxMiniVideoControlPanel::mouseMoved);
+    ofAddListener(ofEvents().mousePressed, this, &ofxMiniVideoControlPanel::mousePressed);
+    ofAddListener(ofEvents().mouseReleased, this, &ofxMiniVideoControlPanel::mouseReleased);
+    ofAddListener(ofEvents().mouseDragged, this, &ofxMiniVideoControlPanel::mouseDragged);
+    
+    ofAddListener(ofEvents().keyPressed, this, &ofxMiniVideoControlPanel::keyPressed);
+    ofAddListener(ofEvents().keyReleased, this, &ofxMiniVideoControlPanel::keyReleased);
 }
 
 ofxMiniVideoControlPanel::~ofxMiniVideoControlPanel(){
-	ofUnregisterMouseEvents(this);
-	ofUnregisterKeyEvents(this);
+    ofRemoveListener(ofEvents().mouseMoved, this, &ofxMiniVideoControlPanel::mouseMoved);
+    ofRemoveListener(ofEvents().mousePressed, this, &ofxMiniVideoControlPanel::mousePressed);
+    ofRemoveListener(ofEvents().mouseReleased, this, &ofxMiniVideoControlPanel::mouseReleased);
+    ofRemoveListener(ofEvents().mouseDragged, this, &ofxMiniVideoControlPanel::mouseDragged);
+    
+    ofRemoveListener(ofEvents().keyPressed, this, &ofxMiniVideoControlPanel::keyPressed);
+    ofRemoveListener(ofEvents().keyReleased, this, &ofxMiniVideoControlPanel::keyReleased);
 }
 
 void ofxMiniVideoControlPanel::drawPanel(int x, int y){
 	video.update();
+    
+    if (!isSender){
+        while (_receiver.hasWaitingMessages()){
+            ofxOscMessage m;
+            _receiver.getNextMessage(&m);
+            if (m.getAddress() == "/MVC/Play"){
+                video.setPaused(false);
+            }
+            if (m.getAddress() == "/MVC/Pause"){
+                video.setPaused(true);
+            }
+            if (m.getAddress() == "/MVC/SetPos"){
+                video.setPosition(m.getArgAsFloat(0));
+            }
+            if (m.getAddress() == "/MVC/SetVideo"){
+                setVideo(m.getArgAsString(0));
+            }
+        }
+    }
+    
 	drawPoint = ofPoint(x,y);
 	ofPushMatrix();
 	ofTranslate(x, y);
@@ -60,6 +90,7 @@ void ofxMiniVideoControlPanel::drawPanel(int x, int y){
 }
 
 void ofxMiniVideoControlPanel::mouseMoved(ofMouseEventArgs &args){
+
 	for (int i = 0;i < 3;i++){
 		ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
 		onMouse[i] = checker.inside(args.x,args.y);
@@ -72,15 +103,17 @@ void ofxMiniVideoControlPanel::mousePressed(ofMouseEventArgs &args){
 		ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
 		
 		if (checker.inside(args.x,args.y)){
-			if (i == 0) video.setPosition(0);
+			if (i == 0) {
+                setPosition(0);
+            }
 			if (i == 1){
-				video.setPaused(!video.isPaused());
+				setPaused(!video.isPaused());
 			}
 		}
 	}
 	ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
 	if (seek.inside(args.x,args.y)){
-		video.setPosition((args.x - drawPoint.x)/200.0);
+		setPosition((args.x - drawPoint.x)/200.0);
 	}
 }
 
@@ -89,15 +122,15 @@ void ofxMiniVideoControlPanel::mouseDragged(ofMouseEventArgs &args){
 		ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
 		
 		if (checker.inside(args.x,args.y)){
-			if (i == 0) video.setPosition(0);
+			if (i == 0) setPosition(0);
 			if (i == 1){
-				video.setPaused(!video.isPaused());
+				setPaused(!video.isPaused());
 			}
 		}
 	}
 	ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
 	if (seek.inside(args.x,args.y)){
-		video.setPosition((args.x - drawPoint.x)/200.0);
+		setPosition((args.x - drawPoint.x)/200.0);
 	}
 }
 
@@ -111,4 +144,52 @@ void ofxMiniVideoControlPanel::keyPressed(ofKeyEventArgs &key){
 
 void ofxMiniVideoControlPanel::keyReleased(ofKeyEventArgs &key){
 	
+}
+
+void ofxMiniVideoControlPanel::enableOscReceive(int port){
+    isEnableOsc = true;
+    isSender = false;
+    
+    _receiver.setup(port);
+}
+
+void ofxMiniVideoControlPanel::enableOscSend(string address, int port){
+    isEnableOsc = true;
+    isSender = true;
+    
+    _sender.setup(address, port);
+}
+
+void ofxMiniVideoControlPanel::setVideo(string filename){
+    video.loadMovie(filename);
+    if (isSender){
+        ofxOscMessage m;
+        m.setAddress("/MVC/SetVideo");
+        m.addStringArg(filename);
+        _sender.sendMessage(m);
+    }
+    video.play();
+    video.setPaused(true);
+    video.setPosition(0);
+}
+
+void ofxMiniVideoControlPanel::setPaused(bool paused){
+    if (isSender){
+        ofxOscMessage m;
+        if (!paused) m.setAddress("/MVC/Play");
+        if ( paused) m.setAddress("/MVC/Pause");
+        _sender.sendMessage(m);
+    }
+    video.setPaused(paused);
+    setPosition(video.getPosition());
+}
+
+void ofxMiniVideoControlPanel::setPosition(float pct){
+    if (isSender){
+        ofxOscMessage m;
+        m.setAddress("/MVC/SetPos");
+        m.addFloatArg(pct);
+        _sender.sendMessage(m);
+    }
+    video.setPosition(pct);
 }
