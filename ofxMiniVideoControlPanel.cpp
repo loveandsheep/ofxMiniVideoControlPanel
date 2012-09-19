@@ -85,6 +85,11 @@ void ofxMiniVideoControlPanel::drawPanel(int x, int y){
 	ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 	ofSetColor(255);
 	ofLine(video.getPosition()*200.0, 0, video.getPosition()*200, 20);
+	string time_s,time_m;
+	time_s = ofToString((int)(video.getDuration()*video.getPosition())%60);
+	time_m = ofToString((int)(video.getDuration()*video.getPosition())/60);
+	ofDrawBitmapString(time_m+":"+time_s, 0,60);
+//	ofDrawBitmapString(video.getCurrentFrame(), 0,80);
 	
 	ofPopMatrix();
 }
