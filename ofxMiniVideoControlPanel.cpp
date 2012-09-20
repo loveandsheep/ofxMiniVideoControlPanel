@@ -32,9 +32,12 @@ void ofxMiniVideoControlPanel::drawPanel(int x, int y){
 	video.update();
     
     if (!isSender){
+        cout << "Recc" << endl;
         while (_receiver.hasWaitingMessages()){
+            cout << "Coming" << endl;
             ofxOscMessage m;
             _receiver.getNextMessage(&m);
+            cout << m.getAddress() << endl;
             if (m.getAddress() == "/MVC/Play"){
                 video.setPaused(false);
             }
