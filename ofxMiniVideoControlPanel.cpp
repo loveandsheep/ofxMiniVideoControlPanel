@@ -1,6 +1,5 @@
 //
 //  ofxMiniVideoControlPanel.cpp
-//  sfpr_mapping_pattern
 //
 //  Created by Ovis aries on 12/09/10.
 //
@@ -13,7 +12,6 @@ ofxMiniVideoControlPanel::ofxMiniVideoControlPanel(){
     ofAddListener(ofEvents().mousePressed, this, &ofxMiniVideoControlPanel::mousePressed);
     ofAddListener(ofEvents().mouseReleased, this, &ofxMiniVideoControlPanel::mouseReleased);
     ofAddListener(ofEvents().mouseDragged, this, &ofxMiniVideoControlPanel::mouseDragged);
-    
     ofAddListener(ofEvents().keyPressed, this, &ofxMiniVideoControlPanel::keyPressed);
     ofAddListener(ofEvents().keyReleased, this, &ofxMiniVideoControlPanel::keyReleased);
 }
@@ -28,9 +26,29 @@ ofxMiniVideoControlPanel::~ofxMiniVideoControlPanel(){
     ofRemoveListener(ofEvents().keyReleased, this, &ofxMiniVideoControlPanel::keyReleased);
 }
 
+void ofxMiniVideoControlPanel::draw(float x, float y){
+	video.draw(x, y);
+}
+
+void ofxMiniVideoControlPanel::draw(float x, float y, float w, float h){
+	video.draw(x, y, w, h);
+}
+
+void ofxMiniVideoControlPanel::draw(const ofPoint &point){
+	video.draw(point);
+}
+
+void ofxMiniVideoControlPanel::draw(const ofRectangle &rect){
+	video.draw(rect);
+}
+
+void ofxMiniVideoControlPanel::draw(const ofPoint &point, float w, float h){
+	video.draw(point, w, h);
+}
+
 void ofxMiniVideoControlPanel::drawPanel(int x, int y){
-	video.update();
-    
+	if (video.isLoaded())video.update();
+   
     if (!isSender){
         while (_receiver.hasWaitingMessages()){
             ofxOscMessage m;
@@ -80,15 +98,17 @@ void ofxMiniVideoControlPanel::drawPanel(int x, int y){
 		}
 	}
 	ofEnableBlendMode(OF_BLENDMODE_ADD);
-	ofSetColor(255,20, 200,128);
-	ofRect(0,0,video.getPosition()*200.0,20.0);
-	ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-	ofSetColor(255);
-	ofLine(video.getPosition()*200.0, 0, video.getPosition()*200, 20);
-	string time_s,time_m;
-	time_s = ofToString((int)(video.getDuration()*video.getPosition())%60);
-	time_m = ofToString((int)(video.getDuration()*video.getPosition())/60);
-	ofDrawBitmapString(time_m+":"+time_s, 0,60);
+//	if (video.isLoaded()){
+		ofSetColor(255,20, 200,128);
+		ofRect(0,0,video.getPosition()*200.0,20.0);
+		ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+		ofSetColor(255);
+		ofLine(video.getPosition()*200.0, 0, video.getPosition()*200, 20);
+		string time_s,time_m;
+		time_s = ofToString((int)(video.getDuration()*video.getPosition())%60);
+		time_m = ofToString((int)(video.getDuration()*video.getPosition())/60);
+		ofDrawBitmapString(time_m+":"+time_s, 63,36);
+//	}
 //	ofDrawBitmapString(video.getCurrentFrame(), 0,80);
 	
 	ofPopMatrix();
@@ -104,38 +124,42 @@ void ofxMiniVideoControlPanel::mouseMoved(ofMouseEventArgs &args){
 }
 
 void ofxMiniVideoControlPanel::mousePressed(ofMouseEventArgs &args){
-	for (int i = 0;i < 3;i++){
-		ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
-		
-		if (checker.inside(args.x,args.y)){
-			if (i == 0) {
-                setPosition(0);
-            }
-			if (i == 1){
-				setPaused(!video.isPaused());
+	if (video.isLoaded()){
+		for (int i = 0;i < 3;i++){
+			ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
+			
+			if (checker.inside(args.x,args.y)){
+				if (i == 0) {
+					setPosition(0);
+				}
+				if (i == 1){
+					setPaused(!video.isPaused());
+				}
 			}
 		}
-	}
-	ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
-	if (seek.inside(args.x,args.y)){
-		setPosition((args.x - drawPoint.x)/200.0);
+		ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
+		if (seek.inside(args.x,args.y)){
+			setPosition((args.x - drawPoint.x)/200.0);
+		}
 	}
 }
 
 void ofxMiniVideoControlPanel::mouseDragged(ofMouseEventArgs &args){
-	for (int i = 0;i < 3;i++){
-		ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
-		
-		if (checker.inside(args.x,args.y)){
-			if (i == 0) setPosition(0);
-			if (i == 1){
-				setPaused(!video.isPaused());
+	if (video.isLoaded()){
+		for (int i = 0;i < 3;i++){
+			ofRectangle checker = ofRectangle(drawPoint.x+i*20,drawPoint.y+20,20,20);
+			
+			if (checker.inside(args.x,args.y)){
+				if (i == 0) setPosition(0);
+				if (i == 1){
+					setPaused(!video.isPaused());
+				}
 			}
 		}
-	}
-	ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
-	if (seek.inside(args.x,args.y)){
-		setPosition((args.x - drawPoint.x)/200.0);
+		ofRectangle seek = ofRectangle(drawPoint.x,drawPoint.y,200,20);
+		if (seek.inside(args.x,args.y)){
+			setPosition((args.x - drawPoint.x)/200.0);
+		}
 	}
 }
 

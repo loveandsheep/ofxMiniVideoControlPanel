@@ -26,7 +26,15 @@ public:
     void setVideo(string filename);
     void setPosition(float pct);
     void setPaused(bool paused);
+	
+	void draw(float x, float y, float w, float h);
+	void draw(float x, float y);
+	void draw(const ofPoint &point);
+	void draw(const ofRectangle &rect);
+	void draw(const ofPoint &point,float w,float h);
+	
 	void drawPanel(int x,int y);
+	
 	ofPoint drawPoint;
 	ofVideoPlayer video;
 	
